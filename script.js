@@ -1,5 +1,8 @@
 // Создание поля
 
+const para = document.querySelector('p');
+let count = 0;
+
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -19,7 +22,7 @@ function randomRGB() {
     return `rgb(${random(0, 255)},${random(0, 255)},${random(0, 255)})`;
 }
 
-// Прототип функции мяча и функция его отрисовки
+// Прототип функции мяча, точки пропадания шаров и функции их отрисовки
 
 function Shape(x, y, velX, velY) {
     this.x = x;
@@ -39,9 +42,25 @@ function Ball(x, y, velX, velY, color, size) {
 function EvilCircle(x, y, velX, velY, color, size) {
     Shape.call(this, x, y, 20, 20);
 
-    this.exists = true;
     this.color = 'white';
     this.size = 10;
+
+    window.addEventListener('keydown', (e) => {
+        switch(e.key) {
+          case 'a':
+            this.x -= this.velX;
+            break;
+          case 'd':
+            this.x += this.velX;
+            break;
+          case 'w':
+            this.y -= this.velY;
+            break;
+          case 's':
+            this.y += this.velY;
+            break;
+        }
+      });
 }
 
 Ball.prototype = Object.create(Shape.prototype);
@@ -54,6 +73,14 @@ Ball.prototype.draw = function () {
     ctx.fillStyle = this.color;
     ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
     ctx.fill();
+}
+
+EvilCircle.prototype.draw = function () {
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = this.color;
+    ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+    ctx.stroke();
 }
 
 Ball.prototype.update = function () {
@@ -81,6 +108,25 @@ Ball.prototype.update = function () {
     this.y += this.velY;
 }
 
+EvilCircle.prototype.checkBounds = function () {
+
+    if ((this.x + this.size) >= width) {
+        this.x = this.size;
+    }
+
+    if ((this.x - this.size) <= 0) {
+        this.x = this.size;
+    }
+
+    if ((this.y + this.size) >= height) {
+        this.y = this.size;
+    }
+
+    if ((this.y - this.size) <= 0) {
+        this.y = this.size;
+    }
+}
+
 // Определение столкновения шаров друг с другом
 
 Ball.prototype.collisionDetect = function () {
@@ -97,31 +143,57 @@ Ball.prototype.collisionDetect = function () {
     }
 }
 
+EvilCircle.prototype.collisionDetect = function () {
+    for (const ball of balls) {
+        if (ball.exists) {
+            const dx = this.x - ball.x;
+            const dy = this.y - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < this.size + ball.size) {
+                ball.exists = false;
+                count--;
+                para.textContent = 'Осталось шаров: ' + count;
+            }
+        }
+    }
+}
+
 // Создание массива шаров и их анимация
 
-var balls = [];
+const balls = [];
+
+while (balls.length < 25) {
+    var ball = new Ball(
+        random(0, width),
+        random(0, height),
+        random(-7, 7),
+        random(-7, 7),
+        'rgb(' + random(0, 255) + ',' + random(0, 255) + ',' + random(0, 255) + ')',
+        random(10, 20)
+    );
+    balls.push(ball);
+    count++;
+    para.textContent = 'Осталось шаров: ' + count;
+}
+
+var evilCircle = new EvilCircle(random(0, width), random(0, height));
 
 function loop() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     ctx.fillRect(0, 0, width, height);
 
-    while (balls.length < 25) {
-        var ball = new Ball(
-            random(0, width),
-            random(0, height),
-            random(-7, 7),
-            random(-7, 7),
-            'rgb(' + random(0, 255) + ',' + random(0, 255) + ',' + random(0, 255) + ')',
-            random(10, 20)
-        );
-        balls.push(ball);
+    for (const ball of balls) {
+        if (ball.exists) {
+            ball.draw();
+            ball.update();
+            ball.collisionDetect();
+        }
     }
 
-    for (var i = 0; i < balls.length; i++) {
-        balls[i].draw();
-        balls[i].update();
-        balls[i].collisionDetect();
-    }
+    evilCircle.draw();
+    evilCircle.checkBounds();
+    evilCircle.collisionDetect();
 
     requestAnimationFrame(loop);
 }
