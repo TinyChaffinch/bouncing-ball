@@ -6,8 +6,8 @@ let count = 0;
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-var width = canvas.width = window.innerWidth;
-var height = canvas.height = window.innerHeight;
+var width = window.innerWidth;
+var height = window.innerHeight;
 
 // Функция генерирующая рандомную цифру
 
@@ -59,6 +59,18 @@ function EvilCircle(x, y, velX, velY, color, size) {
           case 's':
             this.y += this.velY;
             break;
+          case 'ф':
+            this.x -= this.velX;
+            break;
+          case 'в':
+            this.x += this.velX;
+            break;
+          case 'ц':
+            this.y -= this.velY;
+            break;
+          case 'ы':
+            this.y += this.velY;
+            break;
         }
       });
 }
@@ -84,11 +96,7 @@ EvilCircle.prototype.draw = function () {
 }
 
 Ball.prototype.update = function () {
-    start();
-    window.addEventListener('resize', start);
-    width = window.innerWidth;
-    height = window.innerHeight;
-    if ((this.x + this.size) >= width) {
+    if ((this.x + this.size) >= width && this.velX > 0) {
         this.velX = -(this.velX);
     }
 
@@ -96,7 +104,7 @@ Ball.prototype.update = function () {
         this.velX = -(this.velX);
     }
 
-    if ((this.y + this.size) >= height) {
+    if ((this.y + this.size) >= height && this.velY > 0) {
         this.velY = -(this.velY);
     }
 
@@ -129,15 +137,15 @@ EvilCircle.prototype.checkBounds = function () {
 
 // Определение столкновения шаров друг с другом
 
-Ball.prototype.collisionDetect = function () {
-    for (var j = 0; j < balls.length; j++) {
-        if (!(this === balls[j])) {
-            var dx = this.x - balls[j].x;
-            var dy = this.y - balls[j].y;
+function checkCollision() {
+    for (var i = 0; i < balls.length; i++) {
+        for (var j = i + 1; j < balls.length; j++) {
+            var dx = balls[i].x - balls[j].x;
+            var dy = balls[i].y - balls[j].y;
             var distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < this.size + balls[j].size) {
-                balls[j].color = this.color = 'rgb(' + random(0, 255) + ',' + random(0, 255) + ',' + random(0, 255) + ')';
+            if (distance < balls[i].size + balls[j].size) {
+                balls[j].color = balls[i].color = 'rgb(' + random(0, 255) + ',' + random(0, 255) + ',' + random(0, 255) + ')';
             }
         }
     }
@@ -187,9 +195,9 @@ function loop() {
         if (ball.exists) {
             ball.draw();
             ball.update();
-            ball.collisionDetect();
         }
     }
+    checkCollision();
 
     evilCircle.draw();
     evilCircle.checkBounds();
@@ -198,9 +206,23 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-function start() {
-    document.getElementById('SpanID1').innerText = document.documentElement.clientWidth;
-    document.getElementById('SpanID2').innerText = document.documentElement.clientHeight;
+function resize() {
+    var newWidth  = window.innerWidth;
+    var newHeight = window.innerHeight;
+
+    if (newWidth < width || newHeight < height) {
+        for (var i = 0; i < balls.length; i++) {
+            if ((balls[i].y + balls[i].size) >= newHeight)
+                balls[i].y = newHeight - balls[i].size;
+            if ((balls[i].x + balls[i].size) >= newWidth)
+                balls[i].x = newWidth - balls[i].size;
+        }
+    }
+
+    width  = canvas.width  = newWidth;
+    height = canvas.height = newHeight;
 }
 
+window.addEventListener('resize', resize);
+resize();
 loop();
