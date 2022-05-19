@@ -3,8 +3,8 @@
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
-const width = canvas.width = window.innerWidth;
-const height = canvas.height = window.innerHeight;
+var width = canvas.width = window.innerWidth;
+var height = canvas.height = window.innerHeight;
 
 // Функция генерирующая рандомную цифру
 
@@ -21,14 +21,33 @@ function randomRGB() {
 
 // Прототип функции мяча и функция его отрисовки
 
-function Ball(x, y, velX, velY, color, size) {
+function Shape(x, y, velX, velY) {
     this.x = x;
     this.y = y;
     this.velX = velX;
     this.velY = velY;
+}
+
+function Ball(x, y, velX, velY, color, size) {
+    Shape.call(this, x, y, velX, velY);
+
+    this.exists = true;
     this.color = color;
     this.size = size;
 }
+
+function EvilCircle(x, y, velX, velY, color, size) {
+    Shape.call(this, x, y, 20, 20);
+
+    this.exists = true;
+    this.color = 'white';
+    this.size = 10;
+}
+
+Ball.prototype = Object.create(Shape.prototype);
+Ball.prototype.constructor = Ball;
+EvilCircle.prototype = Object.create(Shape.prototype);
+EvilCircle.prototype.constructor = EvilCircle;
 
 Ball.prototype.draw = function () {
     ctx.beginPath();
@@ -38,6 +57,10 @@ Ball.prototype.draw = function () {
 }
 
 Ball.prototype.update = function () {
+    start();
+    window.addEventListener('resize', start);
+    width = window.innerWidth;
+    height = window.innerHeight;
     if ((this.x + this.size) >= width) {
         this.velX = -(this.velX);
     }
@@ -101,6 +124,11 @@ function loop() {
     }
 
     requestAnimationFrame(loop);
+}
+
+function start() {
+    document.getElementById('SpanID1').innerText = document.documentElement.clientWidth;
+    document.getElementById('SpanID2').innerText = document.documentElement.clientHeight;
 }
 
 loop();

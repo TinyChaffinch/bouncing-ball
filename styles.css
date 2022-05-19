@@ -24,3 +24,7 @@ h1 {
     color: transparent;
     text-shadow: 0 0 4px white;
 }
+
+span {
+    position: absolute;
+}
